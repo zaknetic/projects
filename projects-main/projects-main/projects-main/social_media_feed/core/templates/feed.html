@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <h2>Feed</h2>
+
+  <!-- Search & Filter Form -->
+  <form method="GET" action="{% url 'feed' %}" class="mb-4">
+    <div class="row g-2">
+      <!-- Search Bar -->
+      <div class="col-md-4">
+        <input type="text" name="q" class="form-control" placeholder="Search posts..." value="{{ query }}">
+      </div>
+
+      <!-- Filter by Date -->
+      <div class="col-md-2">
+        <select name="date" class="form-select">
+          <option value="latest" {% if filter_date == 'latest' %}selected{% endif %}>Newest First</option>
+          <option value="oldest" {% if filter_date == 'oldest' %}selected{% endif %}>Oldest First</option>
+        </select>
+      </div>
+
+      <!-- Filter by Media Type -->
+      <div class="col-md-2">
+        <select name="media" class="form-select">
+          <option value="all" {% if filter_media == 'all' %}selected{% endif %}>All Posts</option>
+          <option value="text" {% if filter_media == 'text' %}selected{% endif %}>Text-Only</option>
+          <option value="image" {% if filter_media == 'image' %}selected{% endif %}>With Images</option>
+        </select>
+      </div>
+
+      <!-- Filter by User -->
+      <div class="col-md-3">
+        <input type="text" name="user" class="form-control" placeholder="Filter by username" value="{{ filter_user }}">
+      </div>
+
+      <!-- Submit Button -->
+      <div class="col-md-1">
+        <button type="submit" class="btn btn-primary w-100">Filter</button>
+      </div>
+    </div>
+  </form>
+
+  <!-- Display Posts -->
+  {% for post in posts %}
+    <div class="card mb-3">
+      <div class="card-body">
+        <p class="card-text">{{ post.content }}</p>
+        <p class="card-text"><strong>Posted by:</strong> {{ post.user.username }} on {{ post.created_at }}</p>
+
+        {% if post.image %}
+          <img src="{{ post.image.url }}" alt="Post Image" class="img-fluid rounded" style="max-width: 300px;">
+        {% endif %}
+
+        <div class="d-flex justify-content-between mt-2">
+          <div>
+            <a href="{% url 'comment_create' post.pk %}" class="btn btn-primary btn-sm">Add Comment</a>
+            <a href="{% url 'like' post.pk %}" class="btn btn-secondary btn-sm">Like {{ post.likes.count }}</a>
+          </div>
+          {% if post.user == request.user %}
+            <a href="{% url 'post_delete' post.pk %}" class="btn btn-danger btn-sm">Delete</a>
+          {% endif %}
+        </div>
+      </div>
+
+      {% if post.comments.exists %}
+        <div class="card-footer">
+          <h5>Comments</h5>
+          {% for comment in post.comments.all %}
+            <div class="card mb-2">
+              <div class="card-body">
+                <p class="card-text">{{ comment.content }}</p>
+                <p class="card-text"><strong>Posted by:</strong> {{ comment.user.username }} on {{ comment.created_at }}</p>
+                {% if comment.user == request.user %}
+                  <a href="{% url 'comment_delete' comment.pk %}" class="btn btn-danger btn-sm">Delete</a>
+                {% endif %}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+  {% empty %}
+    <p class="text-muted">No posts found.</p>
+  {% endfor %}
+{% endblock %}
